@@ -1455,7 +1455,7 @@ ifndef DISABLE_AUTO_DEPENDENCIES
 #---------------------------------------------------------
 
 DEPEND_OPTIONS = -MMD -MP -MF "$(ObjDir)/$*.d.tmp" \
-         -MT "$(ObjDir)/$*.o" -MT "$(ObjDir)/$*.d"
+         -MT "$(ObjDir)/$*.o" -MT "$(ObjDir)/$*.d" -std=c++98
 
 # If the build succeeded, move the dependency file over, otherwise
 # remove it.
