@@ -782,11 +782,17 @@ Executor::fork(ExecutionState &current, ref<Expr> condition, bool isInternal) {
         else
           klee_warning_once(0, "skipping fork (max-forks reached)");
 
+        KInstruction *ki = current.prevPC;
+        llvm::errs() << "[Executor.cpp] " << ki->info->file << ": " <<
+          ki->info->line << " : " << ki->info->assemblyLine << "\n";
+        
         TimerStatIncrementer timer(stats::forkTime);
         if (theRNG.getBool()) {
+          llvm::errs() << "[Executor.cpp] branch 1\n";
           addConstraint(current, condition);
           res = Solver::True;
         } else {
+          llvm::errs() << "[Executor.cpp] branch 0\n";          
           addConstraint(current, Expr::createIsZero(condition));
           res = Solver::False;
         }
