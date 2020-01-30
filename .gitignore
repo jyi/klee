@@ -22,3 +22,7 @@ lit.site.cfg
 
 docs/doxygen.cfg
 include/klee/Config/CompileTimeInfo.h
+
+GPATH
+GRTAGS
+GTAGS
