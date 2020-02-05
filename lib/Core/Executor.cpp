@@ -102,6 +102,7 @@
 
 #include <errno.h>
 #include <cxxabi.h>
+#include <stdlib.h>
 
 using namespace llvm;
 using namespace klee;
@@ -783,19 +784,24 @@ Executor::fork(ExecutionState &current, ref<Expr> condition, bool isInternal) {
           klee_warning_once(0, "skipping fork (max-forks reached)");
 
         KInstruction *ki = current.prevPC;
-        llvm::errs() << "[Executor.cpp] " << ki->info->file << ": " <<
-          ki->info->line << " : " << ki->info->assemblyLine << "\n";
-        
+        int branch;
         TimerStatIncrementer timer(stats::forkTime);
         if (theRNG.getBool()) {
-          llvm::errs() << "[Executor.cpp] branch 1\n";
           addConstraint(current, condition);
           res = Solver::True;
+          branch = 1;
         } else {
-          llvm::errs() << "[Executor.cpp] branch 0\n";          
           addConstraint(current, Expr::createIsZero(condition));
           res = Solver::False;
+          branch = 0;
         }
+
+        char *trace_file = getenv("ANGELIX_TRACE_IN_KLEE");
+        FILE *fp = fopen(trace_file, "a");
+        if (fp == NULL)
+          abort();
+        fprintf(fp, "%s, %d, %d\n", ki->info->file.c_str(), ki->info->assemblyLine, branch);
+        fclose(fp);
       }
     }
   }
