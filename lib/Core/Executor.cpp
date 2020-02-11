@@ -339,6 +339,10 @@ Executor::Executor(const InterpreterOptions &opts,
   this->solver = new TimingSolver(solver, EqualitySubstitution);
 
   memory = new MemoryManager();
+
+  if (getenv("ANGELIX_PROPOSAL_FOR_KLEE") != NULL) {
+    proposalHandler = new ProposalHandler();
+  }
 }
 
 
@@ -388,6 +392,8 @@ Executor::~Executor() {
     delete timers.back();
     timers.pop_back();
   }
+  if (proposalHandler)
+    delete proposalHandler;
 }
 
 /***/
@@ -785,23 +791,30 @@ Executor::fork(ExecutionState &current, ref<Expr> condition, bool isInternal) {
 
         KInstruction *ki = current.prevPC;
         int branch;
-        TimerStatIncrementer timer(stats::forkTime);
-        if (theRNG.getBool()) {
-          addConstraint(current, condition);
-          res = Solver::True;
-          branch = 1;
+        // Check if a proposal exists
+        char *proposal_file = getenv("ANGELIX_PROPOSAL_FOR_KLEE");
+        if (proposal_file != NULL) {
+          branch = proposalHandler->getBranch(ki->info->file.c_str(), ki->info->assemblyLine);
         } else {
-          addConstraint(current, Expr::createIsZero(condition));
-          res = Solver::False;
-          branch = 0;
+          TimerStatIncrementer timer(stats::forkTime);
+          if (theRNG.getBool()) {
+            addConstraint(current, condition);
+            res = Solver::True;
+            branch = 1;
+          } else {
+            addConstraint(current, Expr::createIsZero(condition));
+            res = Solver::False;
+            branch = 0;
+          }
         }
-
         char *trace_file = getenv("ANGELIX_TRACE_IN_KLEE");
-        FILE *fp = fopen(trace_file, "a");
-        if (fp == NULL)
-          abort();
-        fprintf(fp, "%s, %d, %d\n", ki->info->file.c_str(), ki->info->assemblyLine, branch);
-        fclose(fp);
+        if (trace_file != NULL) {
+          FILE *fp = fopen(trace_file, "a");
+          if (fp == NULL)
+            abort();
+          fprintf(fp, "%s, %d, %d\n", ki->info->file.c_str(), ki->info->assemblyLine, branch);
+          fclose(fp);
+        }
       }
     }
   }
