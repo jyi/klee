@@ -631,7 +631,8 @@ CPP.Flags     += $(sort -I$(PROJ_OBJ_DIR) -I$(PROJ_SRC_DIR) \
 	         $(patsubst %,-I%/include,\
 	         $(PROJ_OBJ_ROOT) $(PROJ_SRC_ROOT) \
 	         $(LLVM_OBJ_ROOT) $(LLVM_SRC_ROOT))) \
-	         $(CPP.BaseFlags)
+	         $(CPP.BaseFlags) \
+	        -I$(CJSON_INCLUDE_PATH)
 
 ifeq ($(BUILD_COMPONENT), 1)
   Compile.C     = $(BUILD_CC) $(CPP.Flags) $(C.Flags) $(CFLAGS) $(CPPFLAGS) \

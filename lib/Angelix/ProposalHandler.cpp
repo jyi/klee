@@ -1,4 +1,5 @@
 #include "angelix/ProposalHandler.h"
+#include "cJSON.h"
 
 using namespace klee;
 
