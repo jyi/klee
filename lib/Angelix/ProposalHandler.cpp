@@ -7,14 +7,17 @@
 using namespace std;
 using namespace klee;
 
-ProposalHandler::ProposalHandler() : proposal(NULL) {}
+ProposalHandler::ProposalHandler() : proposal(NULL), p_table(NULL), i_table(NULL) {}
 
 ProposalHandler::~ProposalHandler() {
   // TODO
+  delete p_table;
+  delete i_table;
 }
 
 int ProposalHandler::getBranch(char* proposal_file,
-                               const char* src_file, unsigned assemblyLine) {
+                               const char* src_file, unsigned assemblyLine,
+                               RNG& theRNG) {
   if (proposal == NULL) {
     proposal = loadProposal(proposal_file);
     makeProposalTable(proposal);
@@ -23,10 +26,26 @@ int ProposalHandler::getBranch(char* proposal_file,
 
   ostringstream convert;
   convert << assemblyLine;
-  string loc = convert.str();  
-  short *bv = p_table[src_file][loc];
-  
-  return 0;
+  string loc = convert.str();
+  short *bv = (*p_table)[src_file][loc];
+
+  int res;
+  if (bv == NULL) {
+    fprintf(stderr, "[ProposalHandler] bv is NULL\n");
+    fprintf(stderr, "[ProposalHandler] src_file: %s\n", src_file);
+    fprintf(stderr, "[ProposalHandler] loc: %s\n", loc);
+    fprintf(stderr, "[ProposalHandler] assemblyLine: %d\n", assemblyLine);
+    if (theRNG.getBool()) {
+      res = 1;
+    } else {
+      res = 0;
+    }
+  } else {  
+    int ins = (*i_table)[src_file][loc];
+    res = bv[ins++];
+  }
+
+  return res;
 }
 
 cJSON* ProposalHandler::loadProposal(char *proposal_file) {
@@ -67,6 +86,7 @@ cJSON* ProposalHandler::loadProposal(char *proposal_file) {
 }
 
 void ProposalHandler::makeProposalTable(cJSON* proposal) {
+  p_table = new proposal_table();
   cJSON* file = NULL;
   cJSON_ArrayForEach(file, proposal) {
     unordered_map<string, short*> *loc_map = new unordered_map<string, short*>();
@@ -81,18 +101,19 @@ void ProposalHandler::makeProposalTable(cJSON* proposal) {
       }
       (*loc_map)[loc->string] = bv;
     }
-    p_table[file->string] = *loc_map;
+    (*p_table)[file->string] = *loc_map;
   }
 }
 
-void ProposalHandler::makeInstanceTable(proposal_table& p_table) {
-  for (proposal_table::iterator it = p_table.begin(); it != p_table.end(); it++) {
+void ProposalHandler::makeInstanceTable(proposal_table* p_table) {
+  i_table = new instance_table();
+  for (proposal_table::iterator it = p_table->begin(); it != p_table->end(); it++) {
     string file = it->first;
     unordered_map<string, short*> loc_map = it->second;
-    unordered_map<string, int> *loc_map2 = new unordered_map<string, int>();    
+    unordered_map<string, int> *loc_map2 = new unordered_map<string, int>();
     for (unordered_map<string, short*>::iterator it2 = loc_map.begin(); it2 != loc_map.end(); it2++) {
       (*loc_map2)[it2->first] = 0;
     }
-    i_table[file] = *loc_map2;
+    (*i_table)[file] = *loc_map2;
   }
 }

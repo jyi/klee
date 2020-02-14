@@ -289,6 +289,7 @@ Executor::Executor(const InterpreterOptions &opts,
     inhibitForking(false),
     haltExecution(false),
     ivcEnabled(false),
+    proposalHandler(NULL),
     coreSolverTimeout(MaxCoreSolverTime != 0 && MaxInstructionTime != 0
       ? std::min(MaxCoreSolverTime,MaxInstructionTime)
       : std::max(MaxCoreSolverTime,MaxInstructionTime)) {
@@ -795,7 +796,8 @@ Executor::fork(ExecutionState &current, ref<Expr> condition, bool isInternal) {
         char *proposal_file = getenv("ANGELIX_PROPOSAL_FOR_KLEE");
         if (proposal_file != NULL) {
           branch = proposalHandler->getBranch(proposal_file,
-                                              ki->info->file.c_str(), ki->info->assemblyLine);
+                                              ki->info->file.c_str(), ki->info->assemblyLine,
+                                              theRNG);
         } else {
           TimerStatIncrementer timer(stats::forkTime);
           if (theRNG.getBool()) {
