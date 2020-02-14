@@ -794,7 +794,8 @@ Executor::fork(ExecutionState &current, ref<Expr> condition, bool isInternal) {
         // Check if a proposal exists
         char *proposal_file = getenv("ANGELIX_PROPOSAL_FOR_KLEE");
         if (proposal_file != NULL) {
-          branch = proposalHandler->getBranch(ki->info->file.c_str(), ki->info->assemblyLine);
+          branch = proposalHandler->getBranch(proposal_file,
+                                              ki->info->file.c_str(), ki->info->assemblyLine);
         } else {
           TimerStatIncrementer timer(stats::forkTime);
           if (theRNG.getBool()) {
