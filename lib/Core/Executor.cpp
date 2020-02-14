@@ -798,6 +798,13 @@ Executor::fork(ExecutionState &current, ref<Expr> condition, bool isInternal) {
           branch = proposalHandler->getBranch(proposal_file,
                                               ki->info->file.c_str(), ki->info->assemblyLine,
                                               theRNG);
+          if (branch == 1) {
+            addConstraint(current, condition);
+            res = Solver::True;
+          } else {
+            addConstraint(current, Expr::createIsZero(condition));
+            res = Solver::False;
+          }
         } else {
           TimerStatIncrementer timer(stats::forkTime);
           if (theRNG.getBool()) {
