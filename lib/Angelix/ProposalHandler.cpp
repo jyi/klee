@@ -1,7 +1,8 @@
 #include "angelix/ProposalHandler.h"
 #include <stdio.h>
 #include <stdlib.h>
-#include<iostream>
+#include <string>
+#include <sstream>
 
 using namespace std;
 using namespace klee;
@@ -17,9 +18,14 @@ int ProposalHandler::getBranch(char* proposal_file,
   if (proposal == NULL) {
     proposal = loadProposal(proposal_file);
     makeProposalTable(proposal);
+    makeInstanceTable(p_table);
   }
-  unordered_map<string, short*> m = file_map[src_file];
-  // short *bv = file_map[src_file][assemblyLine];
+
+  ostringstream convert;
+  convert << assemblyLine;
+  string loc = convert.str();  
+  short *bv = p_table[src_file][loc];
+  
   return 0;
 }
 
@@ -75,6 +81,18 @@ void ProposalHandler::makeProposalTable(cJSON* proposal) {
       }
       (*loc_map)[loc->string] = bv;
     }
-    file_map[file->string] = *loc_map;
+    p_table[file->string] = *loc_map;
+  }
+}
+
+void ProposalHandler::makeInstanceTable(proposal_table& p_table) {
+  for (proposal_table::iterator it = p_table.begin(); it != p_table.end(); it++) {
+    string file = it->first;
+    unordered_map<string, short*> loc_map = it->second;
+    unordered_map<string, int> *loc_map2 = new unordered_map<string, int>();    
+    for (unordered_map<string, short*>::iterator it2 = loc_map.begin(); it2 != loc_map.end(); it2++) {
+      (*loc_map2)[it2->first] = 0;
+    }
+    i_table[file] = *loc_map2;
   }
 }

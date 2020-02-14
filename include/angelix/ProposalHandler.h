@@ -9,6 +9,7 @@ using namespace std;
 using namespace std::tr1;
 
 typedef unordered_map<string, unordered_map<string, short*> > proposal_table;
+typedef unordered_map<string, unordered_map<string, int> > instance_table;
 
 namespace klee {
 
@@ -22,10 +23,12 @@ public:
 private:
   cJSON* proposal;
 
-  unordered_map<string, unordered_map<string, short*> > file_map;
+  proposal_table p_table;
+  instance_table i_table;
 
   cJSON* loadProposal(char* proposal_file);
   void makeProposalTable(cJSON* proposal);
+  void makeInstanceTable(proposal_table& p_table);
 };
 
 } // End klee namespace
