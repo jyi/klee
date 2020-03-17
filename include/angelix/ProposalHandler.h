@@ -20,7 +20,8 @@ public:
   ProposalHandler();
   ~ProposalHandler();
   int getBranch(char* proposal_file,
-                const char* file, unsigned assemblyLine,
+                const char* file,
+                unsigned assemblyLine, unsigned line,
                 RNG& theRNG);
 
 private:

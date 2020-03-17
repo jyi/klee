@@ -15,7 +15,8 @@ ProposalHandler::~ProposalHandler() {
 }
 
 int ProposalHandler::getBranch(char* proposal_file,
-                               const char* src_file, unsigned assemblyLine,
+                               const char* src_file,
+                               unsigned assemblyLine, unsigned line,
                                RNG& theRNG) {
   if (proposal == NULL) {
     proposal = loadProposal(proposal_file);
@@ -31,6 +32,7 @@ int ProposalHandler::getBranch(char* proposal_file,
   fprintf(stderr, "[ProposalHandler] src_file: %s\n", src_file);
   fprintf(stderr, "[ProposalHandler] loc: %s\n", loc.c_str());
   fprintf(stderr, "[ProposalHandler] assemblyLine: %d\n", assemblyLine);
+  fprintf(stderr, "[ProposalHandler] line: %d\n", line);
 
   int res;
   if (bv.empty()) {

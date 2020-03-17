@@ -797,6 +797,7 @@ Executor::fork(ExecutionState &current, ref<Expr> condition, bool isInternal) {
         if (proposal_file != NULL) {
           branch = proposalHandler->getBranch(proposal_file,
                                               ki->info->file.c_str(), ki->info->assemblyLine,
+                                              ki->info->line,
                                               theRNG);
           if (branch == 1) {
             addConstraint(current, condition);
@@ -822,7 +823,8 @@ Executor::fork(ExecutionState &current, ref<Expr> condition, bool isInternal) {
           FILE *fp = fopen(trace_file, "a");
           if (fp == NULL)
             abort();
-          fprintf(fp, "%s, %d, %d\n", ki->info->file.c_str(), ki->info->assemblyLine, branch);
+          fprintf(fp, "%s, %d, %d\n", ki->info->file.c_str(),
+                  ki->info->assemblyLine, branch);
           fclose(fp);
         }
       }
