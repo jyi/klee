@@ -1541,7 +1541,7 @@ int main(int argc, char **argv, char **envp) {
                              /*bold=*/true,
                              /*bg=*/false);
 
-  llvm::errs() << stats.str();
+  klee_message(stats.str().c_str());
 
   if (useColors)
     llvm::errs().resetColor();

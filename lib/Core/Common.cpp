@@ -10,6 +10,7 @@
 #include "Common.h"
 #include "llvm/ADT/StringRef.h"
 #include "llvm/Support/raw_ostream.h"
+#include "llvm/Support/CommandLine.h"
 
 #include <stdlib.h>
 #include <stdio.h>
@@ -18,6 +19,13 @@
 #include <string.h>
 
 #include <set>
+
+namespace {
+  llvm::cl::opt<bool>
+  GobbleKleeMessage("gobble-klee-message",
+                    llvm::cl::init(false),
+                    llvm::cl::desc("Gobble KLEE memssage (default=off)"));
+}
 
 using namespace klee;
 
@@ -93,14 +101,14 @@ static void klee_vfmessage(FILE *fp, const char *pfx, const char *msg,
 }
 
 /* Prints a message/warning.
-   
+
    If pfx is NULL, this is a regular message, and it's sent to
-   klee_message_file (messages.txt).  Otherwise, it is sent to 
+   klee_message_file (messages.txt).  Otherwise, it is sent to
    klee_warning_file (warnings.txt).
 
    Iff onlyToFile is false, the message is also printed on stderr.
 */
-static void klee_vmessage(const char *pfx, bool onlyToFile, const char *msg, 
+static void klee_vmessage(const char *pfx, bool onlyToFile, const char *msg,
                           va_list ap) {
   if (!onlyToFile) {
     va_list ap2;
@@ -114,6 +122,8 @@ static void klee_vmessage(const char *pfx, bool onlyToFile, const char *msg,
 
 
 void klee::klee_message(const char *msg, ...) {
+  if (GobbleKleeMessage) return;
+
   va_list ap;
   va_start(ap, msg);
   klee_vmessage(NULL, false, msg, ap);
@@ -137,6 +147,8 @@ void klee::klee_error(const char *msg, ...) {
 }
 
 void klee::klee_warning(const char *msg, ...) {
+  if (GobbleKleeMessage) return;
+
   va_list ap;
   va_start(ap, msg);
   klee_vmessage(warningPrefix, false, msg, ap);
@@ -146,6 +158,8 @@ void klee::klee_warning(const char *msg, ...) {
 
 /* Prints a warning once per message. */
 void klee::klee_warning_once(const void *id, const char *msg, ...) {
+  if (GobbleKleeMessage) return;
+
   static std::set< std::pair<const void*, const char*> > keys;
   std::pair<const void*, const char*> key;
 
@@ -156,10 +170,10 @@ void klee::klee_warning_once(const void *id, const char *msg, ...) {
   if (strncmp(msg, "calling external", strlen("calling external")) != 0)
     key = std::make_pair(id, msg);
   else key = std::make_pair(id, "calling external");
-  
+
   if (!keys.count(key)) {
     keys.insert(key);
-    
+
     va_list ap;
     va_start(ap, msg);
     klee_vmessage(warningOncePrefix, false, msg, ap);
