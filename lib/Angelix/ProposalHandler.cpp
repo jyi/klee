@@ -1,4 +1,5 @@
 #include "angelix/ProposalHandler.h"
+#include "../Core/Common.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string>
@@ -29,14 +30,14 @@ int ProposalHandler::getBranch(char* proposal_file,
   string loc = convert.str();
   vector<int> bv = (*p_table)[src_file][loc];
 
-  fprintf(stderr, "[ProposalHandler] src_file: %s\n", src_file);
-  fprintf(stderr, "[ProposalHandler] loc: %s\n", loc.c_str());
-  fprintf(stderr, "[ProposalHandler] assemblyLine: %d\n", assemblyLine);
-  fprintf(stderr, "[ProposalHandler] line: %d\n", line);
+  klee_message("[ProposalHandler] src_file: %s", src_file);
+  klee_message("[ProposalHandler] loc: %s", loc.c_str());
+  klee_message("[ProposalHandler] assemblyLine: %d", assemblyLine);
+  klee_message("[ProposalHandler] line: %d", line);
 
   int res;
   if (bv.empty()) {
-    fprintf(stderr, "[ProposalHandler] bv is empty\n");
+    klee_message("[ProposalHandler] bv is empty");
     if (theRNG.getBool()) {
       res = 1;
     } else {
@@ -46,8 +47,8 @@ int ProposalHandler::getBranch(char* proposal_file,
     int ins = (*i_table)[src_file][loc];
     res = bv[ins];
     (*i_table)[src_file][loc] = ins + 1;
-    fprintf(stderr, "[ProposalHandler] fetch %d\n", res);
-    fprintf(stderr, "[ProposalHandler] instance %d\n", ins);
+    klee_message("[ProposalHandler] fetch %d", res);
+    klee_message("[ProposalHandler] instance %d", ins);
   }
 
   return res;
@@ -63,7 +64,7 @@ cJSON* ProposalHandler::loadProposal(char *proposal_file) {
 
   /* delete the existing one */
   if (proposal != NULL) {
-    fprintf(stderr, "[ProposalHandler] proposal is already loaded\n");
+    klee_message("[ProposalHandler] proposal is already loaded");
     exit(1);
   }
 
@@ -83,7 +84,7 @@ cJSON* ProposalHandler::loadProposal(char *proposal_file) {
   /* parase the json text */
   proposal = cJSON_Parse(data);
   if (!proposal) {
-    fprintf(stderr, "[ProposalHandler] Error before: [%s]\n", cJSON_GetErrorPtr());
+    klee_message("[ProposalHandler] Error before: [%s]", cJSON_GetErrorPtr());
     exit(1);
   }
 
