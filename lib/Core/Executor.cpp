@@ -823,8 +823,8 @@ Executor::fork(ExecutionState &current, ref<Expr> condition, bool isInternal) {
           FILE *fp = fopen(trace_file, "a");
           if (fp == NULL)
             abort();
-          fprintf(fp, "%s, %d, %d\n", ki->info->file.c_str(),
-                  ki->info->assemblyLine, branch);
+          fprintf(fp, "%s, %d, %d, %d\n", ki->info->file.c_str(),
+                  ki->info->assemblyLine, ki->info->line, branch);
           fclose(fp);
         }
       }
