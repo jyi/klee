@@ -157,6 +157,8 @@ namespace {
   cl::opt<bool>
   DebugCheckForImpliedValues("debug-check-for-implied-values");
 
+  cl::opt<bool>
+  DebugPathCond("debug-path-condition");
 
   cl::opt<bool>
   SimplifySymIndices("simplify-sym-indices",
@@ -965,6 +967,13 @@ Executor::fork(ExecutionState &current, ref<Expr> condition, bool isInternal) {
 }
 
 void Executor::addConstraint(ExecutionState &state, ref<Expr> condition) {
+  if (DebugPathCond) {
+    KInstruction *ki = state.prevPC;
+    klee_message("add constraint at %s: %d", ki->info->file.c_str(), ki->info->line);
+    condition->print(llvm::errs());
+    llvm::errs() << "\n";
+  }
+
   if (ConstantExpr *CE = dyn_cast<ConstantExpr>(condition)) {
     if (!CE->isTrue())
       llvm::report_fatal_error("attempt to add invalid constraint");
