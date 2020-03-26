@@ -31,7 +31,7 @@
 
 struct KTest;
 
-namespace llvm {
+namespace llvm { 
   class BasicBlock;
   class BranchInst;
   class CallInst;
@@ -50,6 +50,9 @@ namespace llvm {
 }
 
 namespace klee {
+  // choice type
+  typedef enum { BRANCH, PTR } c_type;
+  
   class Array;
   struct Cell;
   class ExecutionState;
@@ -284,6 +287,10 @@ private:
   void branch(ExecutionState &state,
               const std::vector< ref<Expr> > &conditions,
               std::vector<ExecutionState*> &result);
+
+  void write_trace(char *trace_file, KInstruction *ki, c_type type, int value, int max_val);
+
+  int getProposedPtrIdx(char* proposal_file, KInstruction *ki, uint64_t min_val, uint64_t max_val);
 
   // Fork current and return states in which condition holds / does
   // not hold, respectively. One of the states is necessarily the

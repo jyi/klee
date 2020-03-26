@@ -6,6 +6,7 @@
 #include <tr1/unordered_map>
 #include <string>
 #include <vector>
+#include <stdint.h>
 
 using namespace std;
 using namespace std::tr1;
@@ -20,9 +21,13 @@ public:
   ProposalHandler();
   ~ProposalHandler();
   int getBranch(char* proposal_file,
-                const char* file,
+                const char* src_file,
                 unsigned assemblyLine, unsigned line,
                 RNG& theRNG);
+  int getPointerIndex(char* proposal_file,
+                      const char* src_file,
+                      unsigned assemblyLine, unsigned line,
+                      RNG& theRNG, int min_val, int max_val);
 
 private:
   cJSON* proposal;
@@ -30,7 +35,7 @@ private:
   proposal_table* p_table;
   instance_table* i_table;
 
-  cJSON* loadProposal(char* proposal_file);
+  cJSON* loadProposal(const char* proposal_file);
   void makeProposalTable(cJSON* proposal);
   void makeInstanceTable(proposal_table* p_table);
 };

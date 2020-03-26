@@ -416,21 +416,26 @@ void SpecialFunctionHandler::handleChooseBetween(ExecutionState &state,
                                 std::vector<ref<Expr> > &arguments) {
   assert(arguments.size()==2 && "invalid number of arguments to klee_choose_between");
 
-  ConstantExpr *low = dyn_cast<ConstantExpr>(executor.toUnique(state, arguments[0]));
-  ConstantExpr *high = dyn_cast<ConstantExpr>(executor.toUnique(state, arguments[1]));
+  ConstantExpr *min = dyn_cast<ConstantExpr>(executor.toUnique(state, arguments[0]));
+  ConstantExpr *max = dyn_cast<ConstantExpr>(executor.toUnique(state, arguments[1]));
 
-  uint64_t low_val = low->getZExtValue();
-  uint64_t high_val = high->getZExtValue();
+  uint64_t min_val = min->getZExtValue();
+  uint64_t max_val = max->getZExtValue();
 
   uint64_t ptr_idx = 0;
-  FILE *fp = fopen(getenv("ANGELIX_LOAD_JSON"), "rb");
-  if (fp != NULL) {
-    // TODO: read from json file
+  char *proposal_file = getenv("ANGELIX_PROPOSAL_FOR_KLEE");
+  if (proposal_file != NULL) {
+    ptr_idx = executor.getProposedPtrIdx(proposal_file, state.prevPC, min_val, max_val);
   } else {
     srand(time(0));
-    ptr_idx = (rand() % high_val) + low_val;
+    ptr_idx = ((rand() % max_val) + min_val) % max_val;
   }
-  llvm::errs() << "[handleChooseBetween] ptr_idx: " << ptr_idx << "\n";
+
+  char *trace_file = getenv("ANGELIX_TRACE_IN_KLEE");
+  if (trace_file != NULL) {
+    executor.write_trace(trace_file, state.prevPC, PTR, (int) ptr_idx, (int) max_val);
+  }
+
   executor.bindLocal(target, state,
                      ConstantExpr::create(ptr_idx, Expr::Int32));
 }

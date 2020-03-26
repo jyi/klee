@@ -11,8 +11,8 @@ using namespace klee;
 ProposalHandler::ProposalHandler() : proposal(NULL), p_table(NULL), i_table(NULL) {}
 
 ProposalHandler::~ProposalHandler() {
-  delete p_table;
-  delete i_table;
+  if (!p_table) delete p_table;
+  if (!i_table) delete i_table;
 }
 
 int ProposalHandler::getBranch(char* proposal_file,
@@ -37,7 +37,8 @@ int ProposalHandler::getBranch(char* proposal_file,
 
   int res;
   if (bv.empty()) {
-    klee_message("[ProposalHandler] bv is empty");
+    klee_message("[ProposalHandler] bit vector is empty");
+    theRNG.seed(time(0));
     if (theRNG.getBool()) {
       res = 1;
     } else {
@@ -45,16 +46,74 @@ int ProposalHandler::getBranch(char* proposal_file,
     }
   } else {
     int ins = (*i_table)[src_file][loc];
-    res = bv[ins];
-    (*i_table)[src_file][loc] = ins + 1;
-    klee_message("[ProposalHandler] fetch %d", res);
-    klee_message("[ProposalHandler] instance %d", ins);
+    if (ins < bv.size()) {
+      res = bv[ins];
+      (*i_table)[src_file][loc] = ins + 1;
+      klee_message("[ProposalHandler] fetch %d", res);
+      klee_message("[ProposalHandler] instance %d", ins);
+    } else {
+      klee_message("[ProposalHandler] bit vector is already used up");
+      theRNG.seed(time(0));
+      if (theRNG.getBool()) {
+        res = 1;
+      } else {
+        res = 0;
+      }
+    }
   }
 
   return res;
 }
 
-cJSON* ProposalHandler::loadProposal(char *proposal_file) {
+int ProposalHandler::getPointerIndex(char* proposal_file,
+                                     const char* src_file,
+                                     unsigned assemblyLine, unsigned line,
+                                     RNG& theRNG, int min_val, int max_val) {
+  if (proposal == NULL) {
+    proposal = loadProposal(proposal_file);
+    makeProposalTable(proposal);
+    makeInstanceTable(p_table);
+  }
+
+  ostringstream convert;
+  convert << assemblyLine;
+  string loc = convert.str();
+  vector<int> bv = (*p_table)[src_file][loc];
+  for (vector<int>::iterator it = bv.begin(); it != bv.end(); it++) {
+    klee_message("[ProposalHandler] bit vector element: %d", *it);
+  }
+
+  klee_message("[ProposalHandler] src_file: %s", src_file);
+  klee_message("[ProposalHandler] loc: %s", loc.c_str());
+  klee_message("[ProposalHandler] assemblyLine: %d", assemblyLine);
+  klee_message("[ProposalHandler] line: %d", line);
+  klee_message("[ProposalHandler] min_val: %d", min_val);
+  klee_message("[ProposalHandler] max_val: %d", max_val);
+
+  int res;
+  if (bv.empty()) {
+    klee_message("[ProposalHandler] bit vector is empty");
+    theRNG.seed(time(0));
+    res = ((theRNG.getInt32() % max_val) + min_val) % max_val;
+  } else {
+    int ins = (*i_table)[src_file][loc];
+    if (ins < bv.size()) {
+      klee_message("[ProposalHandler] ins: %d", ins);
+      res = bv[ins];
+      (*i_table)[src_file][loc] = ins + 1;
+      klee_message("[ProposalHandler] fetch %d", res);
+      klee_message("[ProposalHandler] instance %d", ins);
+    } else {
+      klee_message("[ProposalHandler] bit vector is already used up");
+      theRNG.seed(time(0));
+      res = ((theRNG.getInt32() % max_val) + min_val) % max_val;
+    }
+  }
+
+  return res;
+}
+
+cJSON* ProposalHandler::loadProposal(const char *proposal_file) {
   FILE *f = NULL;
   long len = 0;
   char *data = NULL;

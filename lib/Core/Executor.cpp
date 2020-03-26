@@ -89,6 +89,8 @@
 #include "llvm/IR/CallSite.h"
 #endif
 
+#include "angelix/ProposalHandlerManager.h"
+
 #include <cassert>
 #include <algorithm>
 #include <iomanip>
@@ -709,6 +711,42 @@ void Executor::branch(ExecutionState &state,
       addConstraint(*result[i], conditions[i]);
 }
 
+void
+Executor::write_trace(char *trace_file, KInstruction *ki, c_type type, int value, int max_val=-1) {
+  FILE *fp = fopen(trace_file, "a");
+  if (fp == NULL)
+    abort();
+
+  switch (type) {
+  case BRANCH:
+  fprintf(fp, "B, %s, %d, %d, %d\n", ki->info->file.c_str(),
+          ki->info->assemblyLine, ki->info->line, value);
+    break;
+  case PTR:
+  fprintf(fp, "P, %s, %d, %d, %d, %d\n", ki->info->file.c_str(),
+          ki->info->assemblyLine, ki->info->line, value, max_val);
+    break;
+  default:
+    klee_error("Unknown choose type: %d", type);
+    abort();
+  }
+
+  fclose(fp);
+}
+
+int
+Executor::getProposedPtrIdx(char* proposal_file, KInstruction *ki, uint64_t min_val, uint64_t max_val) {
+  ProposalHandler* handler = ProposalHandlerManager::getProposalHandler(string(proposal_file));
+  if (!handler) {
+    klee_error("Failed to obtain a proposal handler.");
+  }
+  int ptr_idx = handler->getPointerIndex(proposal_file, ki->info->file.c_str(),
+                                         ki->info->assemblyLine, ki->info->line, theRNG,
+                                         min_val, max_val);
+  klee_message("Proposed pointer index: %d", ptr_idx);
+  return ptr_idx;
+}
+
 Executor::StatePair
 Executor::fork(ExecutionState &current, ref<Expr> condition, bool isInternal) {
   Solver::Validity res;
@@ -798,7 +836,8 @@ Executor::fork(ExecutionState &current, ref<Expr> condition, bool isInternal) {
         char *proposal_file = getenv("ANGELIX_PROPOSAL_FOR_KLEE");
         if (proposal_file != NULL) {
           branch = proposalHandler->getBranch(proposal_file,
-                                              ki->info->file.c_str(), ki->info->assemblyLine,
+                                              ki->info->file.c_str(),
+                                              ki->info->assemblyLine,
                                               ki->info->line,
                                               theRNG);
           if (branch == 1) {
@@ -822,12 +861,7 @@ Executor::fork(ExecutionState &current, ref<Expr> condition, bool isInternal) {
         }
         char *trace_file = getenv("ANGELIX_TRACE_IN_KLEE");
         if (trace_file != NULL) {
-          FILE *fp = fopen(trace_file, "a");
-          if (fp == NULL)
-            abort();
-          fprintf(fp, "%s, %d, %d, %d\n", ki->info->file.c_str(),
-                  ki->info->assemblyLine, ki->info->line, branch);
-          fclose(fp);
+          write_trace(trace_file, ki, BRANCH, branch);
         }
       }
     }
