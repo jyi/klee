@@ -97,17 +97,11 @@ int ProposalHandler::getPointerIndex(char* proposal_file,
     res = ((theRNG.getInt32() % max_val) + min_val) % max_val;
   } else {
     int ins = (*i_table)[src_file][loc];
-    if (ins < bv.size()) {
-      klee_message("[ProposalHandler] ins: %d", ins);
-      res = bv[ins];
-      (*i_table)[src_file][loc] = ins + 1;
-      klee_message("[ProposalHandler] fetch %d", res);
-      klee_message("[ProposalHandler] instance %d", ins);
-    } else {
-      klee_message("[ProposalHandler] bit vector is already used up");
-      theRNG.seed(time(0));
-      res = ((theRNG.getInt32() % max_val) + min_val) % max_val;
-    }
+    klee_message("[ProposalHandler] ins: %d", ins);
+    res = bv[0]; // always use the same index to reduce the search space
+    (*i_table)[src_file][loc] = ins + 1;
+    klee_message("[ProposalHandler] fetch %d", res);
+    klee_message("[ProposalHandler] instance %d", ins);
   }
 
   return res;
