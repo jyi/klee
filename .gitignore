@@ -11,6 +11,7 @@ cscope.*
 *.sum
 *.out
 *.status
+*.bak
 
 *.config
 
